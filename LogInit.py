@@ -5,7 +5,8 @@ Copyright (c) 2004  Dustin Sallings <dustin@spy.net>
 """
 
 from PyObjCTools import NibClassBuilder, AppHelper
-from objc import getClassList, objc_object
+import objc
+from Foundation import NSNotificationCenter, NSTask
 
 NibClassBuilder.extractClasses("LogInit")
 
@@ -28,10 +29,17 @@ class Processes(NibClassBuilder.AutoBaseClass):
 	def addItem(self, it):
 		self.data.append(it)
 
+	def __getitem__(self, which):
+		return self.data[which]
+
 class Command:
 	def __init__(self, cmd):
 		self.cmd=cmd
 		self.pid=-1
+
+	def run(self):
+		NSTask.launchedTaskWithLaunchPath_arguments_("/bin/sh",
+			["-c", self.cmd])
 
 	def valueForKey_(self, k):
 		return self.__dict__[k]
@@ -48,6 +56,12 @@ class Controller(NibClassBuilder.AutoBaseClass):
 		ds=self.table.dataSource()
 		ds.addItem(Command("do something"))
 		self.table.reloadData()
+
+	def run_(self, sender):
+		ds=self.table.dataSource()
+		row=self.table.selectedRow()
+		cmd=ds[row]
+		cmd.run()
 
 if __name__ == "__main__": 
 	AppHelper.runEventLoop()
