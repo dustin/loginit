@@ -12,6 +12,8 @@ from AppKit import NSApplication
 NibClassBuilder.extractClasses("LogInit")
 
 class Processes(NibClassBuilder.AutoBaseClass):
+	"""This class maintains the collection of processes as configured.  It also
+	implements all of the appropriate methods for table view management."""
 
 	def init(self):
 		self.cmds=[]
@@ -42,14 +44,19 @@ class Processes(NibClassBuilder.AutoBaseClass):
 		return(map(lambda x: x.toDict(), self.cmds))
 
 	def cmdFromDict(self, dict):
+		"""Load an individual command from persistent storage"""
 		rv=Command(dict['cmd'])
 		rv.shouldRun=dict['shouldRun']
 		return rv
 
 	def loadArray(self, array):
+		"""Load an array of commands from persistent storage"""
 		self.cmds=map(lambda x: self.cmdFromDict(x), array)
 
 class Command:
+	"""Instances of this class represent processes that are either running or
+	specified."""
+
 	def __init__(self, cmd):
 		self.cmd=cmd
 		self.pid=-1
@@ -57,6 +64,7 @@ class Command:
 		self.task=None
 
 	def run(self):
+		"""Launch this command"""
 		self.task=NSTask.launchedTaskWithLaunchPath_arguments_("/bin/sh",
 			["-c", self.cmd])
 		self.pid=self.task.processIdentifier()
@@ -68,20 +76,24 @@ class Command:
 	__repr__ = __str__
 
 	def shouldBeRunning(self):
+		"""Return true if this command should be running persistently"""
 		return self.shouldRun
 
 	def isRunning(self):
+		"""Return true if this command is currently running"""
 		rv=False
 		if self.task is not None:
 			rv=self.task.isRunning()
 		return rv
 
 	def stopRunning(self):
+		"""Terminate this command."""
 		if self.isRunning():
 			print "Terminating task for", self
 			self.task.terminate()
 
 	def destroy(self):
+		"""Destroy this command (we don't need you anymore)"""
 		self.shouldRun=False
 		self.stopRunning()
 
@@ -97,9 +109,11 @@ class Command:
 			nc.postNotificationName_object_("RUN_CHECKED", self)
 
 	def toDict(self):
+		"""Convert this command to a dictionary for storage"""
 		return({'shouldRun': self.shouldRun, 'cmd': self.cmd})
 
 class Controller(NibClassBuilder.AutoBaseClass):
+	"""The main application controller."""
 
 	def deadProcess_(self, notification):
 		"""Called to let us know when a task completes"""
@@ -192,6 +206,8 @@ class Controller(NibClassBuilder.AutoBaseClass):
 		self.runCommand_(cmd)
 
 	def applicationWillTerminate_(self, notification):
+		"""When the application intends to terminate, kill all running commands
+			and persist the configuration."""
 		print "Application is terminating"
 		ds=self.table.dataSource()
 		defaults=NSUserDefaults.standardUserDefaults()
