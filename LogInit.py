@@ -6,7 +6,8 @@ Copyright (c) 2004  Dustin Sallings <dustin@spy.net>
 
 from PyObjCTools import NibClassBuilder, AppHelper
 import objc
-from Foundation import NSNotificationCenter, NSTask
+from Foundation import NSNotificationCenter, NSTask, NSUserDefaults
+from AppKit import NSApplication
 
 NibClassBuilder.extractClasses("LogInit")
 
@@ -34,6 +35,17 @@ class Processes(NibClassBuilder.AutoBaseClass):
 
 	def __getitem__(self, which):
 		return self.data[which]
+
+	def toArray(self):
+		return(map(lambda x: x.toDict(), self.data))
+
+	def cmdFromDict(self, dict):
+		rv=Command(dict['cmd'])
+		rv.shouldRun=dict['shouldRun']
+		return rv
+
+	def loadArray(self, array):
+		self.data=map(lambda x: self.cmdFromDict(x), array)
 
 class Command:
 	def __init__(self, cmd):
@@ -77,6 +89,9 @@ class Command:
 			nc=NSNotificationCenter.defaultCenter()
 			nc.postNotificationName_object_("RUN_CHECKED", self)
 
+	def toDict(self):
+		return({'shouldRun': self.shouldRun, 'cmd': self.cmd})
+
 class Controller(NibClassBuilder.AutoBaseClass):
 
 	def deadProcess_(self, notification):
@@ -104,8 +119,17 @@ class Controller(NibClassBuilder.AutoBaseClass):
 			if cmd.isRunning():
 				self.stopCommand_(cmd)
 
+	def initDefaults(self):
+		defaults=NSUserDefaults.standardUserDefaults()
+		ob=defaults.objectForKey_("cmds")
+		if ob is not None:
+			ds=self.table.dataSource()
+			ds.loadArray(ob)
+			self.table.reloadData()
+
 	def awakeFromNib(self):
 		print "Awakened from NIB"
+		NSApplication.sharedApplication().setDelegate_(self)
 		self.pids={}
 		nc=NSNotificationCenter.defaultCenter()
 		nc.addObserver_selector_name_object_(self,
@@ -117,10 +141,15 @@ class Controller(NibClassBuilder.AutoBaseClass):
 			"RUN_CHECKED",
 			None)
 
-	def addEntry_(self, sender):
+		self.initDefaults()
+
+	def addCommand(self, cmd):
 		ds=self.table.dataSource()
-		ds.addItem(Command("do something"))
+		ds.addItem(cmd)
 		self.table.reloadData()
+
+	def addEntry_(self, sender):
+		self.addCommand(Command("do something"))
 
 	def stopCommand_(self, cmd):
 		# print "Stopping", cmd
@@ -144,6 +173,12 @@ class Controller(NibClassBuilder.AutoBaseClass):
 		row=self.table.selectedRow()
 		cmd=ds[row]
 		self.runCommand_(cmd)
+
+	def applicationWillTerminate_(self, notification):
+		print "Application is terminating"
+		ds=self.table.dataSource()
+		defaults=NSUserDefaults.standardUserDefaults()
+		defaults.setObject_forKey_(ds.toArray(), "cmds")
 
 if __name__ == "__main__": 
 	AppHelper.runEventLoop()
