@@ -1,7 +1,7 @@
 {
     IBClasses = (
         {
-            ACTIONS = {activate = id; addEntry = id; }; 
+            ACTIONS = {activate = id; addEntry = id; run = id; }; 
             CLASS = Controller; 
             LANGUAGE = ObjC; 
             OUTLETS = {table = NSTableView; }; 
