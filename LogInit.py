@@ -31,6 +31,8 @@ class Processes(NibClassBuilder.AutoBaseClass):
 		self.cmds.append(it)
 
 	def delRow(self, row):
+		cmd=self.cmds[row]
+		cmd.destroy()
 		del self.cmds[row]
 
 	def __getitem__(self, which):
@@ -77,6 +79,10 @@ class Command:
 	def stopRunning(self):
 		if self.isRunning():
 			self.task.terminate()
+
+	def destroy(self):
+		self.shouldRun=False
+		self.stopRunning()
 
 	def valueForKey_(self, k):
 		return self.__dict__[k]
