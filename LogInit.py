@@ -36,11 +36,13 @@ class Command:
 	def __init__(self, cmd):
 		self.cmd=cmd
 		self.pid=-1
+		self.shouldRun=False
+		self.task=None
 
 	def run(self):
-		task=NSTask.launchedTaskWithLaunchPath_arguments_("/bin/sh",
+		self.task=NSTask.launchedTaskWithLaunchPath_arguments_("/bin/sh",
 			["-c", self.cmd])
-		self.pid=task.processIdentifier()
+		self.pid=self.task.processIdentifier()
 		return self.pid
 
 	def __str__(self):
@@ -48,11 +50,29 @@ class Command:
 
 	__repr__ = __str__
 
+	def shouldBeRunning(self):
+		return self.shouldRun
+
+	def isRunning(self):
+		rv=False
+		if self.task is not None:
+			rv=self.task.isRunning()
+		return rv
+
+	def stopRunning(self):
+		if self.isRunning():
+			self.task.terminate()
+
 	def valueForKey_(self, k):
 		return self.__dict__[k]
 
 	def setValue_forKey_(self, v, k):
+		# print "Setting", k, "to", v
 		self.__dict__[k]=v
+		# If it's run, send a notification
+		if k == 'shouldRun':
+			nc=NSNotificationCenter.defaultCenter()
+			nc.postNotificationName_object_("RUN_CHECKED", self)
 
 class Controller(NibClassBuilder.AutoBaseClass):
 
@@ -67,6 +87,20 @@ class Controller(NibClassBuilder.AutoBaseClass):
 			del self.pids[thepid]
 			self.table.reloadData()
 
+			if cmd.shouldBeRunning():
+				self.performSelector_withObject_afterDelay_('runCommand:',
+					cmd, 5.0)
+
+	def runChecked_(self, notification):
+		"""Called when the run checkbox is checked or unchecked"""
+		cmd=notification.object()
+		if cmd.shouldBeRunning():
+			if not cmd.isRunning():
+				self.runCommand_(cmd)
+		else:
+			if cmd.isRunning():
+				self.stopCommand_(cmd)
+
 	def awakeFromNib(self):
 		print "Awakened from NIB"
 		self.pids={}
@@ -75,19 +109,38 @@ class Controller(NibClassBuilder.AutoBaseClass):
 			'deadProcess:',
 			"NSTaskDidTerminateNotification",
 			None)
+		nc.addObserver_selector_name_object_(self,
+			'runChecked:',
+			"RUN_CHECKED",
+			None)
 
 	def addEntry_(self, sender):
 		ds=self.table.dataSource()
 		ds.addItem(Command("do something"))
 		self.table.reloadData()
 
+	def stopCommand_(self, cmd):
+		# print "Stopping", cmd
+		cmd.stopRunning()
+
+	def runCommand_(self, cmd):
+		# print "Starting", cmd
+		pid=cmd.run()
+		self.pids[pid]=cmd
+		self.table.reloadData()
+
+	def removeEntry_(self, sender):
+		ds=self.table.dataSource()
+		row=self.table.selectedRow()
+		if row >= 0:
+			ds.delRow(row)
+			self.table.reloadData()
+
 	def run_(self, sender):
 		ds=self.table.dataSource()
 		row=self.table.selectedRow()
 		cmd=ds[row]
-		pid=cmd.run()
-		self.pids[pid]=cmd
-		self.table.reloadData()
+		self.runCommand_(cmd)
 
 if __name__ == "__main__": 
 	AppHelper.runEventLoop()
