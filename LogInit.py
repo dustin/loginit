@@ -78,6 +78,7 @@ class Command:
 
 	def stopRunning(self):
 		if self.isRunning():
+			print "Terminating task for", self
 			self.task.terminate()
 
 	def destroy(self):
