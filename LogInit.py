@@ -38,8 +38,15 @@ class Command:
 		self.pid=-1
 
 	def run(self):
-		NSTask.launchedTaskWithLaunchPath_arguments_("/bin/sh",
+		task=NSTask.launchedTaskWithLaunchPath_arguments_("/bin/sh",
 			["-c", self.cmd])
+		self.pid=task.processIdentifier()
+		return self.pid
+
+	def __str__(self):
+		return "<Command:  " + self.cmd + ">"
+
+	__repr__ = __str__
 
 	def valueForKey_(self, k):
 		return self.__dict__[k]
@@ -50,10 +57,19 @@ class Command:
 class Controller(NibClassBuilder.AutoBaseClass):
 
 	def deadProcess_(self, notification):
-		print "Got a notification", notification
+		"""Called to let us know when a task completes"""
+		task=notification.object()
+		thepid=task.processIdentifier()
+		# If this is one of our managed commands, clean it up
+		if self.pids.has_key(thepid):
+			cmd=self.pids[thepid]
+			cmd.pid=-1
+			del self.pids[thepid]
+			self.table.reloadData()
 
 	def awakeFromNib(self):
 		print "Awakened from NIB"
+		self.pids={}
 		nc=NSNotificationCenter.defaultCenter()
 		nc.addObserver_selector_name_object_(self,
 			'deadProcess:',
@@ -69,7 +85,9 @@ class Controller(NibClassBuilder.AutoBaseClass):
 		ds=self.table.dataSource()
 		row=self.table.selectedRow()
 		cmd=ds[row]
-		cmd.run()
+		pid=cmd.run()
+		self.pids[pid]=cmd
+		self.table.reloadData()
 
 if __name__ == "__main__": 
 	AppHelper.runEventLoop()
