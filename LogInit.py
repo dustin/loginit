@@ -14,30 +14,30 @@ NibClassBuilder.extractClasses("LogInit")
 class Processes(NibClassBuilder.AutoBaseClass):
 
 	def init(self):
-		self.data=[]
+		self.cmds=[]
 		return self
 
 	def numberOfRowsInTableView_(self, table):
-		return len(self.data)
+		return len(self.cmds)
 
 	def tableView_objectValueForTableColumn_row_(self, table, column, row):
-		rv=self.data[row].valueForKey_(column.identifier())
+		rv=self.cmds[row].valueForKey_(column.identifier())
 		return(rv)
 
 	def tableView_setObjectValue_forTableColumn_row_(self, table, v, col, row):
-		rv=self.data[row].setValue_forKey_(v, col.identifier())
+		rv=self.cmds[row].setValue_forKey_(v, col.identifier())
 
 	def addItem(self, it):
-		self.data.append(it)
+		self.cmds.append(it)
 
 	def delRow(self, row):
-		del self.data[row]
+		del self.cmds[row]
 
 	def __getitem__(self, which):
-		return self.data[which]
+		return self.cmds[which]
 
 	def toArray(self):
-		return(map(lambda x: x.toDict(), self.data))
+		return(map(lambda x: x.toDict(), self.cmds))
 
 	def cmdFromDict(self, dict):
 		rv=Command(dict['cmd'])
@@ -45,7 +45,7 @@ class Processes(NibClassBuilder.AutoBaseClass):
 		return rv
 
 	def loadArray(self, array):
-		self.data=map(lambda x: self.cmdFromDict(x), array)
+		self.cmds=map(lambda x: self.cmdFromDict(x), array)
 
 class Command:
 	def __init__(self, cmd):
