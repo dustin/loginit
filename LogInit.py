@@ -179,6 +179,9 @@ class Controller(NibClassBuilder.AutoBaseClass):
 		ds=self.table.dataSource()
 		defaults=NSUserDefaults.standardUserDefaults()
 		defaults.setObject_forKey_(ds.toArray(), "cmds")
+		for cmd in self.pids.values():
+			print "Terminating", cmd
+			cmd.stopRunning()
 
 if __name__ == "__main__": 
 	AppHelper.runEventLoop()
