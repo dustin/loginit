@@ -113,6 +113,7 @@ class Controller(NibClassBuilder.AutoBaseClass):
 			self.table.reloadData()
 
 			if cmd.shouldBeRunning():
+				print cmd, "apparently died, restarting in 5 seconds"
 				self.performSelector_withObject_afterDelay_('runCommand:',
 					cmd, 5.0)
 
