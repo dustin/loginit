@@ -29,6 +29,9 @@ class Processes(NibClassBuilder.AutoBaseClass):
 	def addItem(self, it):
 		self.data.append(it)
 
+	def delRow(self, row):
+		del self.data[row]
+
 	def __getitem__(self, which):
 		return self.data[which]
 
