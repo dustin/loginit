@@ -33,10 +33,6 @@ class Command:
 		self.cmd=cmd
 		self.pid=-1
 
-	def setCmd_(self, to):
-		self.cmd=to
-		print "cmd is now", self.cmd
-
 	def valueForKey_(self, k):
 		return self.__dict__[k]
 
