@@ -156,6 +156,7 @@ class Controller(NibClassBuilder.AutoBaseClass):
 	def awakeFromNib(self):
 		print "Awakened from NIB"
 		NSApplication.sharedApplication().setDelegate_(self)
+		self.window().setFrameAutosaveName_("mainWindow")
 		self.pids={}
 		nc=NSNotificationCenter.defaultCenter()
 		nc.addObserver_selector_name_object_(self,
