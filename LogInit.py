@@ -6,7 +6,7 @@ Copyright (c) 2004  Dustin Sallings <dustin@spy.net>
 
 from PyObjCTools import NibClassBuilder, AppHelper
 import objc
-from Foundation import NSNotificationCenter, NSTask, NSUserDefaults
+from Foundation import NSNotificationCenter, NSTask, NSUserDefaults, NSIndexSet
 from AppKit import NSApplication
 
 NibClassBuilder.extractClasses("LogInit")
@@ -162,6 +162,11 @@ class Controller(NibClassBuilder.AutoBaseClass):
 
 	def addEntry_(self, sender):
 		self.addCommand(Command("do something"))
+		ds=self.table.dataSource()
+		row=len(ds.cmds)-1
+		indexes=NSIndexSet.indexSetWithIndex_(row)
+		self.table.selectRowIndexes_byExtendingSelection_(indexes, False)
+		self.table.editColumn_row_withEvent_select_(2, row, None, True)
 
 	def stopCommand_(self, cmd):
 		# print "Stopping", cmd
