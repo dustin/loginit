@@ -49,8 +49,16 @@ class Command:
 
 class Controller(NibClassBuilder.AutoBaseClass):
 
+	def deadProcess_(self, notification):
+		print "Got a notification", notification
+
 	def awakeFromNib(self):
 		print "Awakened from NIB"
+		nc=NSNotificationCenter.defaultCenter()
+		nc.addObserver_selector_name_object_(self,
+			'deadProcess:',
+			"NSTaskDidTerminateNotification",
+			None)
 
 	def addEntry_(self, sender):
 		ds=self.table.dataSource()
