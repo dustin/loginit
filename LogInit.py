@@ -125,6 +125,10 @@ class Controller(NibClassBuilder.AutoBaseClass):
 		if ob is not None:
 			ds=self.table.dataSource()
 			ds.loadArray(ob)
+			for cmd in ds.cmds:
+				if cmd.shouldBeRunning():
+					self.performSelector_withObject_afterDelay_('runCommand:',
+						cmd, 0.0)
 			self.table.reloadData()
 
 	def awakeFromNib(self):
