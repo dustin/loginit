@@ -1,7 +1,0 @@
-(^|/)\_darcs($|/)
-(^|/)\.hg($|/)
-(^|/)\.hgtags($|/)
-^loginit.log$
-^loginit.state$
-^loginit.state.old$
-^loginit.state.journal$
